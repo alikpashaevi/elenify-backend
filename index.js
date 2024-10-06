@@ -2,14 +2,16 @@ import express from "express";
 import mongoose from "mongoose";  // Corrected the mongoose import
 import cors from "cors";
 import env from "dotenv";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+
+// Import models and db
 import connectDb from "./db.js";
 import User from "./models/user.js";
-import bcrypt from "bcrypt";
-
 env.config();
 
 const app = express();
-const port = 3000;
+const port = 4000;
 // const saltRounds = process.env.SALT_ROUNDS;
 const saltRounds = 10;
 
@@ -22,6 +24,32 @@ app.use(express.json());
 connectDb();
 
 // Routes
+
+// Get Users
+app.get("/api/users", async (req, res) => {
+  const token = req.headers["authorization"];
+
+  if(!token) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  const removeBearer = token.split(" ")[1];
+  try {
+    const verified = jwt.verify(removeBearer, process.env.JWT_SECRET);
+    const userName = verified.username
+    
+    if(!userName) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const user = await User.findOne({ username: userName });
+
+    res.json(user);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
 
 //Login
 app.post("/api/login", async (req, res) => {
@@ -36,7 +64,14 @@ app.post("/api/login", async (req, res) => {
     if (!isPasswordValid) {
       return res.status(400).json({ message: "Invalid password" });
     }
-    res.json({ message: "Login successful" });
+    const token = jwt.sign({ username: user.username }, process.env.JWT_SECRET, {
+      expiresIn: "1d"
+    });
+    res.status(200).send({
+      name: user.username,
+      accessToken: token,
+       message: "Login successful"
+    });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Internal server error" });
