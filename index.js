@@ -10,6 +10,7 @@ env.config();
 
 const app = express();
 const port = 3000;
+// const saltRounds = process.env.SALT_ROUNDS;
 const saltRounds = 10;
 
 // Middleware
@@ -47,6 +48,8 @@ app.post("/api/login", async (req, res) => {
 app.post("/api/register", async (req, res) => {
   const { username, password } = req.body;
   console.log(username, password);
+  // drop the index
+  // await mongoose.connection.db.dropCollection('users');
 
   try {
     // Check if the user already exists
