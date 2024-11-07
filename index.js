@@ -120,6 +120,39 @@ app.post("/api/register", async (req, res) => {
   }
 })
 
+// update Credits of the user
+app.put("/api/updateCredits", async (req, res) => {
+  const token = req.headers["authorization"];
+  if(!token) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  const removeBearer = token.split(" ")[1];
+  try {
+    const verified = jwt.verify(removeBearer, process.env.JWT_SECRET);
+    const userName = verified.username;
+    if(!userName) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    let user = await User.findOne({ username: userName }); 
+    if (!user) {
+      return res.status(400).json({ message: "User not found" });
+    }
+
+    if(user.creditBalance < 1) {
+      return res.status(400).json({ message: "Insufficient credits" });
+    }
+
+    user.creditBalance = user.creditBalance - 1;
+    await user.save();
+
+    res.json(user.creditBalance);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+})
+
 // add image
 
 app.post("/api/addImage", async (req, res) => {
