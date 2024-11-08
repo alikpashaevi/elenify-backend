@@ -135,9 +135,6 @@ app.put("/api/updateCredits", async (req, res) => {
       return res.status(401).json({ message: "Unauthorized" });
     }
     let user = await User.findOne({ username: userName }); 
-    if (!user) {
-      return res.status(400).json({ message: "User not found" });
-    }
 
     if(user.creditBalance < 1) {
       return res.status(400).json({ message: "Insufficient credits" });
